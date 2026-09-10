@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outbound Engine Plan</title>
+<meta name="description" content="Conciergia × Bobby — build and rollout plan.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  /* Applied before first paint so a dark preference never flashes light.
+     Per-browser, not shared — your theme is yours, Anna picks her own. */
+  (function () {
+    try {
+      var t = localStorage.getItem('plan_theme');
+      document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+    } catch (e) {}
+  })();
+</script>
+<style>
+:root{
+  --bg:#FBFBFC; --surface:#FFFFFF; --surface-2:#F5F6F8;
+  --border:#E3E5EA; --border-strong:#CFD3DA;
+  --text:#191B1F; --text-2:#5A6069; --text-3:#8A9099;
+  --accent:#2F5D8A; --accent-soft:#EAF0F6;
+  --ok:#3B7A4E; --ok-soft:#E9F2EB;
+  --warn:#9A6B12; --warn-soft:#F7F0E2;
+  --stop:#A8443A; --stop-soft:#F7EAE8;
+  --radius:8px;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1113; --surface:#16191C; --surface-2:#1C2024;
+    --border:#272B31; --border-strong:#353A42;
+    --text:#E9EBEE; --text-2:#A3AAB4; --text-3:#767D87;
+    --accent:#7FB0DC; --accent-soft:#182634;
+    --ok:#7FBE92; --ok-soft:#16241A;
+    --warn:#D9AE5F; --warn-soft:#2A2113;
+    --stop:#DE8B80; --stop-soft:#2B1917;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1113; --surface:#16191C; --surface-2:#1C2024;
+  --border:#272B31; --border-strong:#353A42;
+  --text:#E9EBEE; --text-2:#A3AAB4; --text-3:#767D87;
+  --accent:#7FB0DC; --accent-soft:#182634;
+  --ok:#7FBE92; --ok-soft:#16241A;
+  --warn:#D9AE5F; --warn-soft:#2A2113;
+  --stop:#DE8B80; --stop-soft:#2B1917;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:14.5px;line-height:1.6;font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:980px;margin:0 auto;padding-inline:20px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.011em;text-wrap:balance}
+h1{font-size:22px;line-height:1.3}
+h2{font-size:17px;line-height:1.35}
+h3{font-size:14px;line-height:1.4}
+p{margin:0}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- header ---------- */
+header.top{
+  position:sticky;top:0;z-index:30;background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.top-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;flex-direction:column;gap:1px;margin-right:auto;min-width:0}
+.brand .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.prog{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;color:var(--text-2);white-space:nowrap}
+.today{font-family:var(--mono);font-size:11.5px;color:var(--text-3);white-space:nowrap;display:flex;align-items:center;gap:7px}
+.today b{font-weight:400;color:var(--text-2)}
+.today .day{background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:2px 8px}
+.today .idle{background:var(--warn-soft);color:var(--warn);border-radius:20px;padding:2px 8px}
+.bar{width:96px;height:5px;border-radius:3px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.whoami,.themeBtn{
+  font-family:var(--mono);font-size:11.5px;color:var(--text-2);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer;
+}
+.whoami:hover,.themeBtn:hover{color:var(--text);border-color:var(--border-strong)}
+.themeBtn{display:inline-flex;align-items:center;gap:6px;flex:none}
+.themeBtn .g{font-size:12px;line-height:1}
+.whoami{display:inline-flex;align-items:center;gap:7px;flex:none}
+
+/* avatars */
+.av{
+  flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-family:var(--mono);font-size:9.5px;font-weight:500;
+  color:#fff;letter-spacing:.02em;
+}
+.av.sm{width:17px;height:17px;font-size:8.5px}
+.chip.own{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 3px;min-width:0}
+.chip.own.none{padding-left:8px}
+
+/* for-you strip */
+.mine{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 14px;margin-bottom:16px;font-size:13px;
+}
+.mine b{font-weight:500}
+.mine .pill{
+  font-family:var(--mono);font-size:11px;background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:2px 9px;color:var(--text-2);
+}
+.mine .go{font-family:var(--mono);font-size:11.5px;color:var(--accent);margin-left:auto}
+.mine .only{
+  font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--surface);
+  border-radius:20px;padding:3px 10px;color:var(--text-2);flex:none;
+}
+.mine .only:hover{border-color:var(--border-strong);color:var(--text)}
+.mine .only[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent}
+.filtered .sec-h .sub{display:none}
+.empty-note{font-size:13px;color:var(--text-3);padding:6px 0}
+
+/* mentions */
+.mention{
+  background:var(--accent-soft);color:var(--accent);border-radius:4px;
+  padding:0 3px;font-weight:500;white-space:nowrap;
+}
+.mention.self{background:var(--warn-soft);color:var(--warn)}
+.mbtn{
+  font-family:var(--mono);font-size:11px;color:var(--text-3);border:1px solid var(--border);
+  background:var(--surface-2);border-radius:20px;padding:2px 8px;margin-top:6px;
+}
+.mbtn:hover{color:var(--accent);border-color:var(--border-strong)}
+
+/* team */
+.team{display:flex;flex-direction:column;gap:2px}
+.member{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.member:last-of-type{border-bottom:none}
+.member .nm{flex:1;padding:1px 3px;border-radius:4px}
+.member .nm:hover{background:var(--surface-2)}
+.member .nm:focus{background:var(--surface-2);outline:1px solid var(--border-strong)}
+.member .tag{font-family:var(--mono);font-size:11px;color:var(--text-3)}
+.member .isme{font-family:var(--mono);font-size:10.5px;background:var(--ok-soft);color:var(--ok);border-radius:20px;padding:2px 8px}
+.member .setme{font-family:var(--mono);font-size:10.5px;color:var(--text-3);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+.member .setme:hover{color:var(--accent)}
+
+/* activity filter */
+.afilter{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.afilter button{
+  font-family:var(--mono);font-size:10.5px;border:1px solid var(--border);border-radius:20px;
+  padding:3px 9px;color:var(--text-3);background:var(--surface-2);
+}
+.afilter button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+
+/* ---------- login ---------- */
+#gateScreen{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+#gateScreen[hidden]{display:none!important}
+.login{
+  width:100%;max-width:352px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:26px 24px;
+}
+.login .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.login h2{margin:6px 0 3px}
+.login .sub{font-size:13px;color:var(--text-2);margin-bottom:20px}
+.login label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:5px}
+.login input{
+  width:100%;font:inherit;font-size:14px;padding:9px 11px;margin-bottom:14px;
+  background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;
+}
+.login input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.login button.go{
+  width:100%;background:var(--accent);color:#fff;border-radius:6px;padding:10px;
+  font-size:14px;font-weight:500;
+}
+.login button.go:hover{filter:brightness(1.08)}
+.login button.go:disabled{opacity:.6;cursor:default}
+.login .err{font-size:12.5px;color:var(--stop);margin-bottom:12px;min-height:16px}
+.login .alt{font-size:12px;color:var(--text-3);margin-top:16px;text-align:center;line-height:1.5}
+.login .alt button{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:12px}
+.signout{font-family:var(--mono);font-size:10.5px;color:var(--text-3)}
+.signout:hover{color:var(--stop)}
+.gate{
+  display:flex;align-items:center;gap:10px;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;
+}
+.gate .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.sw{
+  position:relative;width:38px;height:21px;border-radius:12px;background:var(--border-strong);
+  border:none;cursor:pointer;flex:none;transition:background .16s;
+}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .16s}
+.sw[aria-checked="true"]{background:var(--ok)}
+.sw[aria-checked="true"]::after{transform:translateX(17px)}
+.gate .val{font-size:12.5px;font-weight:500;white-space:nowrap}
+.gate input[type=date]{
+  font:inherit;font-size:12.5px;background:transparent;border:none;color:var(--text);
+  font-family:var(--mono);padding:0;
+}
+
+/* ---------- timeline ---------- */
+.rail{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface);margin-block:22px}
+.rail .st{flex:1;min-width:0;padding:11px 14px;border-right:1px solid var(--border)}
+.rail .st:last-child{border-right:none}
+.rail .st.now{background:var(--accent-soft);box-shadow:inset 0 2px 0 var(--accent)}
+.rail .st.past{opacity:.58}
+.rail .st.late .d{color:var(--warn)}
+.rail .st .n{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);display:block}
+.rail .st .t{font-size:13px;font-weight:500;display:block;margin-top:2px}
+.rail .st .d{font-family:var(--mono);font-size:11px;color:var(--text-2);display:block;margin-top:1px}
+@media(max-width:720px){.rail{flex-direction:column}.rail .st{border-right:none;border-bottom:1px solid var(--border)}}
+
+/* ---------- sections ---------- */
+section{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:16px;overflow:hidden;
+}
+.sec-h{display:flex;align-items:baseline;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sec-h .idx{font-family:var(--mono);font-size:11px;color:var(--text-3);flex:none}
+.sec-h .sub{font-size:12.5px;color:var(--text-2);margin-left:auto}
+.sec-b{padding:6px 18px 18px}
+
+.step{border-top:1px solid var(--border);padding-block:16px}
+.step:first-child{border-top:none}
+.step-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.step-h .num{font-family:var(--mono);font-size:11px;color:var(--accent);flex:none}
+.step-when{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-left:auto}
+.grp{margin-top:14px}
+.grp-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px}
+
+/* ---------- task rows ---------- */
+.row{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.row:last-of-type{border-bottom:none}
+.cb{
+  flex:none;width:15px;height:15px;margin-top:4px;border-radius:4px;border:1.5px solid var(--border-strong);
+  background:var(--surface);cursor:pointer;position:relative;
+}
+.cb[aria-checked="true"]{background:var(--ok);border-color:var(--ok)}
+.cb[aria-checked="true"]::after{
+  content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;
+  border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(42deg);
+}
+.tx{flex:1;min-width:0;padding:1px 2px;border-radius:4px}
+.tx[contenteditable]:hover{background:var(--surface-2)}
+.tx[contenteditable]:focus{background:var(--surface-2);outline:1px solid var(--border-strong)}
+.row.done .tx{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--border-strong)}
+.chip{
+  flex:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;
+  padding:2px 7px;border-radius:20px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text-2);cursor:pointer;white-space:nowrap;margin-top:2px;
+}
+.chip.s-prog{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.s-done{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.s-block{background:var(--stop-soft);color:var(--stop);border-color:transparent}
+.chip.own{min-width:44px;text-align:center}
+.del{flex:none;color:var(--text-3);font-size:15px;line-height:1;padding:3px 4px;margin-top:2px;opacity:0;border-radius:4px}
+.row:hover .del,.del:focus-visible{opacity:1}
+.del:hover{color:var(--stop);background:var(--stop-soft)}
+.add{
+  font-family:var(--mono);font-size:11.5px;color:var(--text-3);padding:6px 2px;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.add:hover{color:var(--accent)}
+
+.out{
+  margin-top:12px;padding:8px 12px;background:var(--surface-2);border-left:2px solid var(--accent);
+  border-radius:0 4px 4px 0;font-size:13px;color:var(--text-2);
+}
+.out b{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:400;margin-right:6px}
+.note{
+  margin-top:10px;min-height:30px;padding:7px 10px;border:1px dashed var(--border);border-radius:6px;
+  font-size:13px;color:var(--text-2);
+}
+.note:focus{border-style:solid;border-color:var(--border-strong);background:var(--surface-2);outline:none}
+.note:empty::before{content:attr(data-ph);color:var(--text-3)}
+
+/* ---------- links ---------- */
+.links{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+.lk{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.lk a{color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk a:hover{text-decoration:underline}
+.lk .ico{flex:none;color:var(--text-3);font-family:var(--mono);font-size:11px}
+.lk .del{opacity:0}
+.lk:hover .del{opacity:1}
+
+/* ---------- tiers ---------- */
+.tier{border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow:hidden}
+.tier-h{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);cursor:pointer;width:100%;text-align:left}
+.tier-h .cnt{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-left:auto}
+.tier-h .car{font-family:var(--mono);font-size:10px;color:var(--text-3);transition:transform .15s}
+.tier[open] .car{transform:rotate(90deg)}
+.tier-b{padding:2px 12px 10px}
+.row .sub2{font-size:12px;color:var(--text-3);display:block}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-3);font-weight:400;text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--border-strong);
+}
+td{padding:7px 10px 7px 0;border-bottom:1px solid var(--border);vertical-align:top}
+td[contenteditable]{border-radius:4px}
+td[contenteditable]:hover{background:var(--surface-2)}
+td[contenteditable]:focus{background:var(--surface-2);outline:1px solid var(--border-strong)}
+.num,td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- fields ---------- */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.f{background:var(--surface);padding:12px 14px}
+.f .k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:5px}
+.f .v{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums;color:var(--text);padding:1px 3px;border-radius:4px;display:inline-block;min-width:30px}
+.f .v:hover{background:var(--surface-2)}
+.f .v:focus{background:var(--surface-2);outline:1px solid var(--border-strong)}
+
+/* ---------- decisions ---------- */
+.dec{border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:8px}
+.dec.res{background:var(--ok-soft);border-color:transparent}
+.dec-h{display:flex;align-items:flex-start;gap:10px}
+.dec-q{flex:1;font-weight:500;font-size:13.5px}
+.dec .note{margin-top:8px}
+
+/* ---------- activity ---------- */
+.act{font-family:var(--mono);font-size:11.5px;color:var(--text-3);display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--border)}
+.act:last-child{border-bottom:none}
+.act .w{color:var(--text-2);flex:none}
+
+footer{padding:26px 0 44px;font-family:var(--mono);font-size:11px;color:var(--text-3);display:flex;gap:14px;flex-wrap:wrap}
+footer button{color:var(--text-3);text-decoration:underline;text-underline-offset:2px}
+footer button:hover{color:var(--accent)}
+.sync{margin-left:auto;display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.dot.on{background:var(--ok)}
+</style>
+</head>
+<body>
+
+<div id="gateScreen" hidden>
+  <form class="login" id="loginForm" autocomplete="on">
+    <span class="k">Conciergia × Bobby</span>
+    <h2>Outbound engine</h2>
+    <p class="sub">Sign in to open the plan.</p>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <div class="err" id="loginErr"></div>
+    <button type="submit" class="go" id="loginBtn">Sign in</button>
+    <p class="alt" id="loginAlt"></p>
+  </form>
+</div>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <span class="k">Conciergia × Bobby</span>
+      <h1>Outbound engine — build and rollout</h1>
+    </div>
+    <button class="whoami" id="whoami" title="Who's editing">…</button>
+    <span class="today" id="today"></span>
+    <button class="themeBtn" id="themeBtn" title="Switch between light and dark"></button>
+    <div class="prog"><span id="progText">0 / 0</span><span class="bar"><i id="progBar"></i></span></div>
+    <div class="gate">
+      <span class="lbl">Commercials</span>
+      <button class="sw" id="gateSw" role="switch" aria-checked="false" aria-label="Commercials agreed"></button>
+      <span class="val" id="gateVal">Not agreed</span>
+      <input type="date" id="gateDate" hidden aria-label="Date agreed">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="rail" id="rail"></div>
+  <div id="mine"></div>
+
+  <section>
+    <div class="sec-h"><span class="idx">01</span><h2>The plan</h2><span class="sub">Everything runs from the day commercials are agreed</span></div>
+    <div class="sec-b" id="steps"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">02</span><h2>Warm pipeline</h2><span class="sub" id="warmCount"></span></div>
+    <div class="sec-b" id="warm"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">03</span><h2>TAM</h2><span class="sub">Filled in week 3</span></div>
+    <div class="sec-b" id="tam"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">04</span><h2>Targets</h2><span class="sub">Edit any figure</span></div>
+    <div class="sec-b" id="targets"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">05</span><h2>Weekly log</h2><span class="sub">Filled Monday. This replaces the status update.</span></div>
+    <div class="sec-b" id="log"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">06</span><h2>Access and inputs</h2><span class="sub">Needed to start</span></div>
+    <div class="sec-b" id="access"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">07</span><h2>Open decisions</h2></div>
+    <div class="sec-b" id="decisions"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">08</span><h2>Resources</h2></div>
+    <div class="sec-b" id="resources"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">09</span><h2>Team</h2><span class="sub">Type @name anywhere to tag someone</span></div>
+    <div class="sec-b" id="team"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="idx">10</span><h2>Activity</h2></div>
+    <div class="sec-b" id="activity"></div>
+  </section>
+
+  <footer>
+    <span id="saved">Saved locally</span>
+    <button id="exportBtn">Export JSON</button>
+    <button id="resetBtn">Reset to default</button>
+    <button id="signOutBtn" class="signout" hidden>Sign out</button>
+    <span class="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Local only</span></span>
+  </footer>
+</main>
+
+<!-- Supabase client. Harmless if you never configure it below. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* =========================================================================
+   SHARED STORAGE
+   Leave blank and the page saves to this browser only.
+   Fill both in and it saves to Supabase, shared and live between viewers.
+
+   Table to create first:
+
+     create table plan_state (
+       id text primary key,
+       doc jsonb not null,
+       updated_at timestamptz not null default now()
+     );
+     alter publication supabase_realtime add table plan_state;
+
+   For two known people, RLS off with the anon key is fine. If you want it
+   locked down, add a policy and swap the anon key for an authed session.
+   ======================================================================== */
+const SUPABASE_URL  = '';
+const SUPABASE_KEY  = '';
+const DOC_ID        = 'conciergia-plan';
+
+/* Accounts. Create these two users in Supabase → Authentication → Users
+   (set a password for each), then put the same addresses here. Whoever
+   signs in is matched to a team member by email, and that decides which
+   tasks are "theirs". */
+const ACCOUNTS = {
+  'm-bobby': 'bobby@example.com',
+  'm-anna':  'anna@example.com',
+};
+
+/* Lock the table down once the two users exist:
+
+     alter table plan_state enable row level security;
+     create policy "signed-in read"  on plan_state for select
+       to authenticated using (true);
+     create policy "signed-in write" on plan_state for all
+       to authenticated using (true) with check (true);
+
+   With RLS on, the anon key alone can no longer read or write the plan —
+   a session is required, so the login is a real boundary rather than a
+   screen in front of an open door. */
+/* ====================================================================== */
+
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+/* ---- clock. Every date on this page is read from the machine at render
+   time; nothing is baked in. `todayISO` is the single source of "now". ---- */
+function todayISO() {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+function daysBetween(a, b) {
+  return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+}
+function plural(n, w) { return n + ' ' + w + (Math.abs(n) === 1 ? '' : 's'); }
+const STATUSES = ['To do', 'In progress', 'Blocked', 'Done'];
+const AV_COLORS = ['#2F5D8A', '#7A4B86', '#3B7A4E', '#A8643A', '#9A6B12', '#9A4B57'];
+
+function initialsOf(name) {
+  const p = String(name).trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
+  return (p.length === 1 ? p[0].slice(0, 2) : p[0][0] + p[1][0]).toUpperCase();
+}
+/* The name people type after @ — first word, lowercased, accents kept. */
+function handleOf(name) { return String(name).trim().split(/\s+/)[0].toLowerCase(); }
+function members() { return (state && state.members) || []; }
+function memberByName(n) {
+  const h = handleOf(n);
+  return members().find(m => handleOf(m.name) === h) || null;
+}
+function meMember() {
+  if (session && session.user) {
+    const email = String(session.user.email || '').toLowerCase();
+    const id = Object.keys(ACCOUNTS).find(k => String(ACCOUNTS[k] || '').toLowerCase() === email);
+    return members().find(m => m.id === id) || null;
+  }
+  const id = localStorage.getItem('plan_me_id');
+  return members().find(m => m.id === id) || null;
+}
+function avatar(name, sm) {
+  const m = memberByName(name);
+  const color = m ? m.color : 'var(--text-3)';
+  return '<span class="av' + (sm ? ' sm' : '') + '" style="background:' + color + '">' + esc(initialsOf(name)) + '</span>';
+}
+function ownerCycle() { return ['—'].concat(members().map(m => m.name)); }
+
+/* "Only my open items" — a per-viewer view mode, not shared state. */
+let onlyMine = localStorage.getItem('plan_only_mine') === '1';
+function isMine(t) {
+  const m = meMember();
+  if (!m) return false;
+  if (handleOf(t.owner || '') === handleOf(m.name)) return true;
+  return mentionsIn(t.text).includes(m.id) || mentionsIn(t.sub).includes(m.id);
+}
+function showTask(t) { return !onlyMine || (!t.done && isMine(t)); }
+
+function T(text, owner) { return { id: uid(), text, done: false, owner: owner || '—', status: 'To do' }; }
+
+function defaultState() {
+  return {
+    meta: { agreed: false, startDate: '', updatedAt: null, createdAt: todayISO() },
+    members: [
+      { id: 'm-bobby', name: 'Bobby', color: AV_COLORS[0] },
+      { id: 'm-anna', name: 'Anna', color: AV_COLORS[1] },
+    ],
+    steps: [
+      {
+        id: uid(), num: '01', title: 'Finalize commercials', when: 'Gate',
+        groups: [{ id: uid(), title: '', tasks: [
+          T('Agree terms and tooling budget', 'Bobby'),
+          T('Confirm access to the existing accounts and what is safe to send from them', 'Anna'),
+          T('Agree communication cadence and approval workflow', 'Bobby'),
+        ]}],
+        output: 'Clock starts.', links: [], notes: ''
+      },
+      {
+        id: uid(), num: '02', title: 'Build and open', when: 'Weeks 1–2',
+        groups: [
+          { id: uid(), title: 'Aritzia', tasks: [
+            T('Identify decision makers above the affiliate team', 'Bobby'),
+            T('Prepare the managed-service positioning ahead of the first call', 'Bobby'),
+            T('Approach with the end-to-end gifting managed service, clean restart', 'Bobby'),
+          ]},
+          { id: uid(), title: 'Infrastructure', tasks: [
+            T('Register domains and configure DNS — SPF, DKIM, DMARC', 'Bobby'),
+            T('Create inboxes, warming starts day one', 'Bobby'),
+            T('Procure and configure the sequencer, replacing GMass', 'Bobby'),
+            T('Connect Clay, B2B data and enrichment APIs', 'Bobby'),
+            T('Wire the suppression file in centrally before anything sends', 'Bobby'),
+          ]},
+          { id: uid(), title: 'Lists', tasks: [
+            T('Enrich named contacts, starting with the brands sequenced first', 'Bobby'),
+            T('Analyse the brands that onboarded to extract the traits of accounts that converted and stayed', 'Bobby'),
+            T('Translate the ICP into filters we can query: category, market, price band, commerce stack, whether they already gift', 'Bobby'),
+            T('Layer in spend-capacity signals: influencer activity, affiliate program, paid social, PR agency retained', 'Bobby'),
+            T('Layer in professionalization signals: named marketing contact, collabs@ address, creator program', 'Bobby'),
+          ]},
+          { id: uid(), title: 'Messaging', tasks: [
+            T('Separate angles per segment, separate value propositions to test against each other', 'Bobby'),
+            T('Subject lines tested independently of body copy', 'Bobby'),
+            T('Personalization drawn from real signals, not merge tags', 'Bobby'),
+            T('Draft sequences: value-first opener, proof, soft ask, breakup', 'Bobby'),
+          ]},
+          { id: uid(), title: 'Live at low scale, on existing accounts', tasks: [
+            T('Work the warm pipeline — Aritzia, hot, warm, Shopify-unblocked', 'Bobby'),
+            T('Cold brand outreach at agreed daily caps', 'Bobby'),
+          ]},
+        ],
+        output: 'Campaigns live, infrastructure warming, Aritzia approached, ICP written.',
+        links: [], notes: ''
+      },
+      {
+        id: uid(), num: '03', title: 'First influencer campaign', when: 'Week 3',
+        groups: [{ id: uid(), title: '', tasks: [
+          T('Separate sending domains from brand outreach', 'Bobby'),
+          T('Set the daily cap per account, starting below the theoretical ceiling', 'Bobby'),
+          T('Prepare the list from the 1,873 contactable, never approached', 'Bobby'),
+          T('Two-touch sequence into platform sign-up', 'Bobby'),
+          T('Track sign-ups against target', 'Bobby'),
+          T('Size the addressable market against the ICP — how many match and have a findable contact', 'Bobby'),
+          T('Build lookalike targeting in Clay and the data providers', 'Bobby'),
+          T('Enrich, dedupe and qualify against the consolidated database', 'Bobby'),
+        ]}],
+        output: 'First sign-ups, TAM estimate and proposed month-two volume.',
+        links: [], notes: ''
+      },
+      {
+        id: uid(), num: '04', title: 'Scale', when: 'Week 4 onward',
+        groups: [{ id: uid(), title: '', tasks: [
+          T('Cut sending onto the new infrastructure as warming completes', 'Bobby'),
+          T('Ramp to 500–1,000 brands per month', 'Bobby'),
+          T('Adapt influencer volume to which clients are closing', 'Bobby'),
+          T('Warm a second infrastructure wave only if volume justifies it', 'Bobby'),
+          T('Hold paid channels until 10–30 paying customers', 'Bobby'),
+        ]}],
+        output: 'Sustained volume, measured conversion.',
+        links: [], notes: ''
+      },
+    ],
+    warm: {
+      note: 'Do not pitch the 41 hot leads or the 10 already onboard. Blue Billie removed.',
+      links: [], notes: '',
+      tiers: [
+        { id: uid(), title: 'Tier 0 — Aritzia', open: true, items: [
+          B('Aritzia', 'Senior marketing above Ally / Hannah. Gifting managed service, clean restart.'),
+        ]},
+        { id: uid(), title: 'Tier 1 — Hot', open: true, items: [
+          B('Evellant', 'Henrik Dahl Rubak — in trial, said "let\'s give it 2–3 months"'),
+          B('Pygmalion London', 'Rosanna — asked to book a demo, team in Hong Kong'),
+          B('Epres', 'Valeria Vargas Zayas — US brand into EU, founder of Olaplex. Top-package target.'),
+          B('Drink bérys', 'Sebastian Draws — 300+ creators on a waiting list'),
+          B('Tōbu Pace', 'Viktoria Vasilyeva — attended demo 7 May'),
+          B('Read the Label', 'Amanda Eriksson — asked "what\'s the cost?" Send pricing.'),
+          B('Generosa Nature', 'Cristina — new home and pet line, planned March start'),
+          B('The Longevity Store', 'Packages sent — Starter €69 / Growth €129 / Pro €299. Price stage.'),
+        ]},
+        { id: uid(), title: 'Tier 2 — Warm', open: false, items: [
+          B('Verso Skincare', 'Linda Söderholm — Shopify was the blocker, no longer is'),
+          B('Little Liffner', 'Ana — waiting on EU gifting to open. It has.'),
+          B('La Tranquillina', 'Shopify/legal concern now resolved'),
+          B('Modesty Boudoir', 'Sara — wanted to start once autumn collection landed'),
+          B('ACT Running', 'Thibault Repelin — fitness filters now exist. Second shoe brand too.'),
+          B('Two Poles', 'Irina Crespo — strong call, momentum died. Restart.'),
+          B('Makydo', 'Vinothkumar Sethupathi — keen to onboard, never completed'),
+          B('Mabel', 'Tom McCollum — call disrupted, never rescheduled'),
+          B('Bbatchig', 'Clara Boyadjian — asked to re-engage around September'),
+          B('Tandhem', 'Chaitanya Patel — free trial confirmed, then stalled'),
+          B('Kind2', 'Caner Veli — consultant with multiple brands. Explore both.'),
+          B('Mascolori', 'Jochem — booked with Zoë, never signed up'),
+          B('dhyères', 'Pierre Laffite — was travelling, call never happened'),
+          B('Andora Hats', 'Willeke Velthoen — content-guarantee concern'),
+          B('MAP (Mother Apothecary)', 'Fayna — demo done, budget still being allocated'),
+          B('TIWI', 'Laura — registered, never kicked off'),
+          B('Leff Amsterdam', 'Engaged reply on the trial offer'),
+          B('Asereje Brand', 'Miquel Comas — booked, no-show. Reschedule.'),
+          B('Gian Andrea Züllig', 'Mushroom brand — confirm still active, find contact'),
+        ]},
+        { id: uid(), title: 'Tier 3 — Shopify blocker gone', open: false, items: [
+          B('Dea Rail Jewels', 'Giorgia — was interested pending Shopify'),
+          B('Lorenza Simondi Studio', 'Was interested pending Shopify'),
+          B('SIZ', 'Sofia'),
+          B('Vinata Cosmetics', 'Natalia — on Wix'),
+        ]},
+        { id: uid(), title: 'Tier 4 — Opened, no reply', open: false, items: [
+          B('Giomi', 'Signed up, never completed onboarding'),
+          B('Clai Naturals', 'Single founder, overwhelmed but wants in. Make it easy.'),
+          B('Sowvital', 'Jack — UK gifting, wanted ~100 UK creators first'),
+          B('Moonhaven', 'Started onboarding, never completed'),
+          B('Neats', 'Opened, no reply'),
+        ]},
+        { id: uid(), title: 'Nudge', open: false, items: [
+          B('Beauty Disrupted', 'Alessandra Costa — booked, no-show'),
+          B('Amoln', 'Early Curatist client. Nordic strength is the angle.'),
+          B('Om', 'Jacob — Swedish husband-and-wife brand'),
+          B('Tylko', 'Redirected to collabs@'),
+          B('Flattered', 'Redirected to collaborations@'),
+          B('Kleider Mafia', 'Via Instagram'),
+        ]},
+        { id: uid(), title: 'Channel partnerships', open: false, items: [
+          B('vervaunt.com', 'UK ecommerce agency — plug into their client base'),
+          B('Caner / Kind2', 'Consultant — embed Conciergia in his offering'),
+        ]},
+      ],
+    },
+    tam: [
+      { id: uid(), k: 'ICP hypothesis', v: '' },
+      { id: uid(), k: 'Brands matching', v: '' },
+      { id: uid(), k: 'With a findable contact', v: '' },
+      { id: uid(), k: 'Proposed month-2 volume', v: '' },
+    ],
+    targets: [
+      { id: uid(), k: 'Month 1 brands', v: '250–500' },
+      { id: uid(), k: 'Month 2+ brands / mo', v: '500–1,000' },
+      { id: uid(), k: 'Creator sends / account / day', v: '25' },
+      { id: uid(), k: 'Creator sign-up target', v: '50–100' },
+      { id: uid(), k: 'Cost per qualified brand', v: '€0.50–0.80' },
+    ],
+    log: [{ id: uid(), week: 'Week 1', sent: '', replied: '', booked: '', signups: '', notes: '' }],
+    access: [
+      T('Tooling budget signed off', 'Anna'),
+      T('Access to the existing sending accounts, with agreed caps', 'Anna'),
+      T('Brand and creator lists handed over', 'Anna'),
+      T('Consolidated database confirmed as the single source of truth', 'Anna'),
+      T('Hot leads and warm conversations confirmed as Zoë\'s', 'Anna'),
+    ],
+    decisions: [
+      { id: uid(), q: 'Where does the warm-lead boundary with Zoë sit?', note: '', resolved: false },
+      { id: uid(), q: 'Is the creator sign-up target a commitment or an expectation?', note: '', resolved: false },
+      { id: uid(), q: 'What volume are we comfortable sending from the existing accounts?', note: '', resolved: false },
+    ],
+    resources: [],
+    activity: [],
+  };
+}
+function B(name, note) { return { id: uid(), text: name, sub: note, done: false, owner: 'Bobby', status: 'To do' }; }
+
+/* ---------------- store ---------------- */
+let state = null, me = '', sb = null, saveTimer = null, applying = false;
+let session = null;
+const AUTH_ON = !!(SUPABASE_URL && SUPABASE_KEY);
+
+const LS = 'conciergia_plan_v1';
+function loadLocal() { try { const r = localStorage.getItem(LS); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
+
+function setSync(on, txt) {
+  document.getElementById('syncDot').classList.toggle('on', !!on);
+  document.getElementById('syncTxt').textContent = txt;
+}
+
+async function initStore() {
+  const local = loadLocal();
+  state = local || defaultState();
+  if (sb) {
+    try {
+      const { data } = await sb.from('plan_state').select('doc').eq('id', DOC_ID).maybeSingle();
+      if (data && data.doc) state = data.doc;
+      else await sb.from('plan_state').upsert({ id: DOC_ID, doc: state });
+      sb.channel('plan')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'plan_state', filter: 'id=eq.' + DOC_ID },
+            payload => {
+              if (payload.new && payload.new.doc && !applying) {
+                state = payload.new.doc; saveLocal(); render();
+              }
+            })
+        .subscribe();
+      setSync(true, 'Shared — live');
+    } catch (e) { setSync(false, 'Local only (sync failed)'); }
+  } else {
+    setSync(false, 'Local only');
+  }
+}
+
+function touch(what) {
+  state.meta.updatedAt = new Date().toISOString();
+  if (what) {
+    state.activity.unshift({ id: uid(), t: state.meta.updatedAt, who: me || 'Someone', what });
+    state.activity = state.activity.slice(0, 40);
+  }
+  saveLocal();
+  document.getElementById('saved').textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (sb) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      applying = true;
+      try { await sb.from('plan_state').upsert({ id: DOC_ID, doc: state, updated_at: new Date().toISOString() }); }
+      catch (e) { setSync(false, 'Sync error'); }
+      setTimeout(() => { applying = false; }, 400);
+    }, 600);
+  }
+}
+
+/* ---------------- helpers ---------------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* Escape, then light up @mentions that match a team member.
+   Safe inside contenteditable: textContent still reads back as plain text. */
+function rich(s) {
+  const me = meMember();
+  return esc(s).replace(/@([\wÀ-ÿ'’-]+)/g, (full, name) => {
+    const m = memberByName(name);
+    if (!m) return full;
+    const self = me && m.id === me.id ? ' self' : '';
+    return '<span class="mention' + self + '">@' + esc(m.name) + '</span>';
+  });
+}
+function mentionsIn(s) {
+  const out = [];
+  String(s || '').replace(/@([\wÀ-ÿ'’-]+)/g, (full, name) => {
+    const m = memberByName(name);
+    if (m && !out.includes(m.id)) out.push(m.id);
+    return full;
+  });
+  return out;
+}
+const statusClass = s => s === 'In progress' ? 's-prog' : s === 'Done' ? 's-done' : s === 'Blocked' ? 's-block' : '';
+
+function allTasks() {
+  const out = [];
+  state.steps.forEach(s => s.groups.forEach(g => g.tasks.forEach(t => out.push(t))));
+  state.warm.tiers.forEach(t => t.items.forEach(i => out.push(i)));
+  state.access.forEach(t => out.push(t));
+  return out;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+function addDays(d, n) {
+  const dt = new Date(d + 'T00:00:00');
+  dt.setDate(dt.getDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+function windowFor(i) {
+  const s = state.meta.startDate;
+  if (!state.meta.agreed || !s) return ['Gate', 'Weeks 1–2', 'Week 3', 'Week 4 onward'][i];
+  if (i === 0) return fmtDate(s);
+  if (i === 1) return fmtDate(s) + ' – ' + fmtDate(addDays(s, 13));
+  if (i === 2) return fmtDate(addDays(s, 14)) + ' – ' + fmtDate(addDays(s, 20));
+  return fmtDate(addDays(s, 21)) + ' →';
+}
+function elapsed() {
+  if (!state.meta.agreed || !state.meta.startDate) return null;
+  return daysBetween(state.meta.startDate, todayISO());
+}
+function currentStep() {
+  const d = elapsed();
+  if (d === null) return 0;
+  return d < 14 ? 1 : d < 21 ? 2 : 3;
+}
+/* A step is late when today is past its window and its tasks aren't done. */
+function stepLate(i) {
+  const d = elapsed();
+  if (d === null) return false;
+  const ends = [0, 13, 20, Infinity][i];
+  if (d <= ends) return false;
+  const s = state.steps[i];
+  if (!s) return false;
+  return s.groups.some(g => g.tasks.some(t => !t.done));
+}
+
+function taskRow(t, path, opts) {
+  opts = opts || {};
+  return '<div class="row ' + (t.done ? 'done' : '') + '" data-id="' + t.id + '">'
+    + '<button class="cb" role="checkbox" aria-checked="' + (t.done ? 'true' : 'false') + '" data-act="toggle" data-path="' + path + '" aria-label="Done"></button>'
+    + '<span class="tx" contenteditable="true" data-edit="' + path + '.text">' + rich(t.text) + '</span>'
+    + (opts.sub && t.sub !== undefined ? '<span class="sub2" contenteditable="true" data-edit="' + path + '.sub">' + rich(t.sub) + '</span>' : '')
+    + '<button class="chip own' + (t.owner === '—' ? ' none' : '') + '" data-act="owner" data-path="' + path + '">'
+      + (t.owner === '—' ? '—' : avatar(t.owner, true) + esc(t.owner)) + '</button>'
+    + '<button class="chip ' + statusClass(t.status) + '" data-act="status" data-path="' + path + '">' + esc(t.status) + '</button>'
+    + '<button class="del" data-act="delTask" data-path="' + path + '" aria-label="Delete">×</button>'
+    + '</div>';
+}
+
+function noteBlock(val, path, ph) {
+  return '<div class="note" contenteditable="true" data-ph="' + esc(ph) + '" data-edit="' + path + '">' + rich(val) + '</div>'
+    + '<button class="mbtn" data-act="mention" data-path="' + path + '">@ tag someone</button>';
+}
+
+function linksBlock(arr, path) {
+  return '<div class="links">'
+    + arr.map((l, i) => '<div class="lk"><span class="ico">↗</span><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>'
+      + '<button class="del" data-act="delLink" data-path="' + path + '" data-i="' + i + '" aria-label="Remove link">×</button></div>').join('')
+    + '<button class="add" data-act="addLink" data-path="' + path + '">+ link</button></div>';
+}
+
+/* ---------------- render ---------------- */
+function render() {
+  const done = allTasks().filter(t => t.done).length, total = allTasks().length;
+  document.getElementById('progText').textContent = done + ' of ' + total + ' done';
+  document.getElementById('progBar').style.width = total ? (done / total * 100) + '%' : '0%';
+
+  const meM = meMember();
+  document.getElementById('signOutBtn').hidden = !session;
+  document.getElementById('whoami').innerHTML = meM
+    ? avatar(meM.name, true) + esc(meM.name)
+    : 'Set who you are';
+
+  /* everything open that is assigned to me or tags me */
+  const mineBox = document.getElementById('mine');
+  if (meM) {
+    const assigned = [], tagged = [];
+    allTasks().forEach(t => {
+      if (t.done) return;
+      if (handleOf(t.owner) === handleOf(meM.name)) assigned.push(t);
+      else if (mentionsIn(t.text).includes(meM.id) || mentionsIn(t.sub).includes(meM.id)) tagged.push(t);
+    });
+    state.steps.forEach(s => { if (mentionsIn(s.notes).includes(meM.id)) tagged.push({ text: 'a note on “' + s.title + '”' }); });
+    state.decisions.forEach(d => { if (!d.resolved && mentionsIn(d.note).includes(meM.id)) tagged.push({ text: 'a decision — ' + d.q }); });
+    if (mentionsIn(state.warm.notes).includes(meM.id)) tagged.push({ text: 'a note on the warm pipeline' });
+    const toggle = '<button class="only" data-act="onlyMine" aria-pressed="' + onlyMine + '">'
+      + (onlyMine ? '✓ Only my items' : 'Only my items') + '</button>';
+    mineBox.innerHTML = (assigned.length || tagged.length)
+      ? '<div class="mine">' + avatar(meM.name) + '<b>For you</b>'
+        + (assigned.length ? '<span class="pill">' + assigned.length + ' open ' + (assigned.length === 1 ? 'task' : 'tasks') + '</span>' : '')
+        + (tagged.length ? '<span class="pill">' + tagged.length + ' ' + (tagged.length === 1 ? 'mention' : 'mentions') + '</span>' : '')
+        + toggle
+        + '<span class="go">' + esc((assigned[0] || tagged[0]).text.slice(0, 56)) + '</span></div>'
+      : '<div class="mine">' + avatar(meM.name) + '<b>Nothing open for you.</b>' + toggle + '</div>';
+  } else {
+    onlyMine = false;
+    mineBox.innerHTML = '';
+  }
+
+  /* Focus mode hides everything that isn't an action item. */
+  document.body.classList.toggle('filtered', onlyMine);
+  ['tam', 'targets', 'log', 'resources', 'team', 'activity'].forEach(id => {
+    const sec = document.getElementById(id).closest('section');
+    if (sec) sec.style.display = onlyMine ? 'none' : '';
+  });
+  const sw = document.getElementById('gateSw');
+  sw.setAttribute('aria-checked', state.meta.agreed ? 'true' : 'false');
+  document.getElementById('gateVal').textContent = state.meta.agreed ? ('Agreed ' + (fmtDate(state.meta.startDate) || '')) : 'Not agreed';
+  const gd = document.getElementById('gateDate');
+  gd.hidden = !state.meta.agreed; gd.value = state.meta.startDate || '';
+
+  const now = todayISO(), el = elapsed();
+  const todayLbl = new Date(now + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  let badge = '';
+  if (el !== null) {
+    badge = '<span class="day">Day ' + (el + 1) + '</span>';
+  } else {
+    const waiting = daysBetween(state.meta.createdAt || now, now);
+    badge = waiting > 0
+      ? '<span class="idle">Not started · ' + plural(waiting, 'day') + '</span>'
+      : '<span class="idle">Not started</span>';
+  }
+  document.getElementById('today').innerHTML = '<b>' + todayLbl + '</b>' + badge;
+
+  const cur = currentStep();
+  document.getElementById('rail').innerHTML = state.steps.map((s, i) => {
+    const cls = ['st', i === cur ? 'now' : (i < cur ? 'past' : ''), stepLate(i) ? 'late' : ''].join(' ');
+    const late = stepLate(i) ? ' · overdue' : '';
+    return '<div class="' + cls + '"><span class="n">Step ' + s.num + '</span>'
+      + '<span class="t">' + esc(s.title) + '</span>'
+      + '<span class="d">' + esc(windowFor(i)) + late + '</span></div>';
+  }).join('');
+
+  const stepsHtml = state.steps.map((s, si) => {
+    const groups = s.groups.map((g, gi) => {
+      const rows = g.tasks.map((t, ti) =>
+        showTask(t) ? taskRow(t, 'steps.' + si + '.groups.' + gi + '.tasks.' + ti) : '').join('');
+      if (onlyMine && !rows) return '';
+      return '<div class="grp">'
+        + (g.title !== '' ? '<div class="grp-t" contenteditable="true" data-edit="steps.' + si + '.groups.' + gi + '.title">' + esc(g.title) + '</div>' : '')
+        + rows
+        + (onlyMine ? '' : '<button class="add" data-act="addTask" data-path="steps.' + si + '.groups.' + gi + '.tasks">+ task</button>')
+        + '</div>';
+    }).join('');
+    if (onlyMine && !groups) return '';
+    return '<div class="step">'
+      + '<div class="step-h"><span class="num">' + esc(s.num) + '</span>'
+      + '<h3 contenteditable="true" data-edit="steps.' + si + '.title">' + esc(s.title) + '</h3>'
+      + '<span class="step-when">' + esc(windowFor(si)) + '</span></div>'
+      + groups
+      + (onlyMine ? '' :
+          '<button class="add" data-act="addGroup" data-path="steps.' + si + '.groups">+ group</button>'
+          + '<div class="out"><b>Output</b><span contenteditable="true" data-edit="steps.' + si + '.output">' + esc(s.output) + '</span></div>'
+          + linksBlock(s.links, 'steps.' + si + '.links')
+          + noteBlock(s.notes, 'steps.' + si + '.notes', 'Notes, blockers…'))
+      + '</div>';
+  }).join('');
+  document.getElementById('steps').innerHTML =
+    (stepsHtml || '<div class="empty-note">Nothing open for you in the plan.</div>')
+    + (onlyMine ? '' : '<button class="add" data-act="addStep">+ step</button>');
+
+  const warmTotal = state.warm.tiers.reduce((n, t) => n + t.items.length, 0);
+  const warmDone = state.warm.tiers.reduce((n, t) => n + t.items.filter(i => i.done).length, 0);
+  document.getElementById('warmCount').textContent = warmDone + ' of ' + warmTotal + ' worked';
+  const tiersHtml = state.warm.tiers.map((tier, xi) => {
+    const rows = tier.items.map((it, ii) =>
+      showTask(it) ? taskRow(it, 'warm.tiers.' + xi + '.items.' + ii, { sub: true }) : '').join('');
+    if (onlyMine && !rows) return '';
+    return '<details class="tier"' + (tier.open || onlyMine ? ' open' : '') + '>'
+      + '<summary class="tier-h"><span class="car">▶</span>'
+      + '<h3>' + esc(tier.title) + '</h3>'
+      + '<span class="cnt">' + tier.items.filter(i => i.done).length + '/' + tier.items.length + '</span></summary>'
+      + '<div class="tier-b">' + rows
+      + (onlyMine ? '' : '<button class="add" data-act="addBrand" data-path="warm.tiers.' + xi + '.items">+ brand</button>')
+      + '</div></details>';
+  }).join('');
+  document.getElementById('warm').innerHTML =
+    (onlyMine ? '' : '<div class="out" style="border-left-color:var(--stop)"><b>Suppression</b><span contenteditable="true" data-edit="warm.note">' + esc(state.warm.note) + '</span></div>')
+    + (tiersHtml || '<div class="empty-note">No brands assigned to you.</div>')
+    + (onlyMine ? '' :
+        '<button class="add" data-act="addTier">+ tier</button>'
+        + linksBlock(state.warm.links, 'warm.links')
+        + noteBlock(state.warm.notes, 'warm.notes', 'Notes…'));
+
+  document.getElementById('tam').innerHTML = '<div class="fields">'
+    + state.tam.map((f, i) => '<div class="f"><span class="k" contenteditable="true" data-edit="tam.' + i + '.k">' + esc(f.k) + '</span>'
+      + '<span class="v" contenteditable="true" data-ph="—" data-edit="tam.' + i + '.v">' + esc(f.v) + '</span></div>').join('')
+    + '</div>';
+
+  document.getElementById('targets').innerHTML = '<div class="fields">'
+    + state.targets.map((f, i) => '<div class="f"><span class="k" contenteditable="true" data-edit="targets.' + i + '.k">' + esc(f.k) + '</span>'
+      + '<span class="v" contenteditable="true" data-edit="targets.' + i + '.v">' + esc(f.v) + '</span></div>').join('')
+    + '</div>';
+
+  document.getElementById('log').innerHTML = '<div class="tw"><table><thead><tr>'
+    + '<th style="width:14%">Week</th><th>Sent</th><th>Replied</th><th>Meetings</th><th>Sign-ups</th><th style="width:36%">Notes</th></tr></thead><tbody>'
+    + state.log.map((r, i) => '<tr>'
+      + ['week', 'sent', 'replied', 'booked', 'signups', 'notes'].map(k =>
+          '<td class="' + (k === 'notes' || k === 'week' ? '' : 'n') + '" contenteditable="true" data-edit="log.' + i + '.' + k + '">' + esc(r[k]) + '</td>').join('')
+      + '</tr>').join('')
+    + '</tbody></table></div><button class="add" data-act="addLogRow">+ week</button>';
+
+  const accHtml = state.access.map((t, i) => showTask(t) ? taskRow(t, 'access.' + i) : '').join('');
+  document.getElementById('access').innerHTML =
+    (accHtml || '<div class="empty-note">Nothing outstanding for you here.</div>')
+    + (onlyMine ? '' : '<button class="add" data-act="addAccess">+ item</button>');
+
+  document.getElementById('decisions').innerHTML = state.decisions.map((d, i) =>
+    '<div class="dec ' + (d.resolved ? 'res' : '') + '">'
+    + '<div class="dec-h">'
+    + '<span class="dec-q" contenteditable="true" data-edit="decisions.' + i + '.q">' + esc(d.q) + '</span>'
+    + '<button class="chip ' + (d.resolved ? 's-done' : '') + '" data-act="resolve" data-path="decisions.' + i + '">' + (d.resolved ? 'Resolved' : 'Open') + '</button>'
+    + '<button class="del" data-act="delDecision" data-path="decisions.' + i + '" aria-label="Delete">×</button>'
+    + '</div>'
+    + noteBlock(d.note, 'decisions.' + i + '.note', 'What we decided…')
+    + '</div>').join('')
+    + '<button class="add" data-act="addDecision">+ decision</button>';
+
+  document.getElementById('resources').innerHTML = linksBlock(state.resources, 'resources');
+
+  document.getElementById('team').innerHTML = '<div class="team">'
+    + members().map((m, i) =>
+      '<div class="member">' + avatar(m.name)
+      + '<span class="nm" contenteditable="true" data-edit="members.' + i + '.name">' + esc(m.name) + '</span>'
+      + '<span class="tag">@' + esc(handleOf(m.name)) + '</span>'
+      + (meM && meM.id === m.id
+          ? '<span class="isme">This is you</span>'
+          : (session ? '<span class="tag">' + esc(ACCOUNTS[m.id] || 'no account') + '</span>'
+                     : '<button class="setme" data-act="setMe" data-id="' + m.id + '">This is me</button>'))
+      + '<button class="del" data-act="delMember" data-path="members.' + i + '" aria-label="Remove">×</button>'
+      + '</div>').join('')
+    + '</div><button class="add" data-act="addMember">+ person</button>';
+
+  const filt = state.activityFilter || 'all';
+  const rows = state.activity.filter(a => filt === 'all' || a.who === filt);
+  document.getElementById('activity').innerHTML =
+    '<div class="afilter"><button data-act="afilter" data-who="all" aria-pressed="' + (filt === 'all') + '">Everyone</button>'
+    + members().map(m => '<button data-act="afilter" data-who="' + esc(m.name) + '" aria-pressed="' + (filt === m.name) + '">' + esc(m.name) + '</button>').join('')
+    + '</div>'
+    + (rows.length
+      ? rows.map(a => '<div class="act">' + avatar(a.who, true) + '<span class="w">' + esc(a.who) + '</span><span>' + esc(a.what) + '</span>'
+        + '<span style="margin-left:auto">' + new Date(a.t).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span></div>').join('')
+      : '<div class="act">Nothing yet.</div>');
+}
+
+/* ---------------- path access ---------------- */
+function getAt(path) {
+  return path.split('.').reduce((o, k) => o == null ? o : o[/^\d+$/.test(k) ? Number(k) : k], state);
+}
+function setAt(path, val) {
+  const parts = path.split('.'), last = parts.pop();
+  const parent = parts.reduce((o, k) => o[/^\d+$/.test(k) ? Number(k) : k], state);
+  parent[/^\d+$/.test(last) ? Number(last) : last] = val;
+}
+function removeAt(path) {
+  const parts = path.split('.'), last = Number(parts.pop());
+  const arr = parts.reduce((o, k) => o[/^\d+$/.test(k) ? Number(k) : k], state);
+  arr.splice(last, 1);
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act, path = btn.dataset.path;
+
+  if (act === 'toggle') {
+    const t = getAt(path); t.done = !t.done; t.status = t.done ? 'Done' : 'To do';
+    touch((t.done ? 'ticked ' : 'unticked ') + '“' + t.text.slice(0, 46) + '”');
+  } else if (act === 'owner') {
+    const t = getAt(path), cyc = ownerCycle();
+    const i = cyc.indexOf(t.owner);
+    t.owner = cyc[(i < 0 ? 0 : i + 1) % cyc.length];
+    touch('assigned “' + t.text.slice(0, 40) + '” to ' + t.owner);
+  } else if (act === 'status') {
+    const t = getAt(path); t.status = STATUSES[(STATUSES.indexOf(t.status) + 1) % STATUSES.length];
+    t.done = t.status === 'Done';
+    touch('set “' + t.text.slice(0, 40) + '” to ' + t.status);
+  } else if (act === 'delTask') {
+    const t = getAt(path); if (!confirm('Delete “' + t.text + '”?')) return;
+    removeAt(path); touch('deleted a task');
+  } else if (act === 'addTask') {
+    getAt(path).push(T('New task')); touch('added a task');
+  } else if (act === 'addBrand') {
+    getAt(path).push(B('New brand', '')); touch('added a brand');
+  } else if (act === 'addGroup') {
+    getAt(path).push({ id: uid(), title: 'New group', tasks: [T('New task')] }); touch('added a group');
+  } else if (act === 'addStep') {
+    state.steps.push({ id: uid(), num: String(state.steps.length + 1).padStart(2, '0'), title: 'New step', when: '',
+      groups: [{ id: uid(), title: '', tasks: [T('New task')] }], output: '', links: [], notes: '' });
+    touch('added a step');
+  } else if (act === 'addTier') {
+    state.warm.tiers.push({ id: uid(), title: 'New tier', open: true, items: [] }); touch('added a tier');
+  } else if (act === 'addAccess') {
+    state.access.push(T('New item', 'Anna')); touch('added an access item');
+  } else if (act === 'addLogRow') {
+    state.log.push({ id: uid(), week: 'Week ' + (state.log.length + 1), sent: '', replied: '', booked: '', signups: '', notes: '' });
+    touch('added a week to the log');
+  } else if (act === 'addDecision') {
+    state.decisions.push({ id: uid(), q: 'New decision', note: '', resolved: false }); touch('added a decision');
+  } else if (act === 'delDecision') {
+    removeAt(path); touch('removed a decision');
+  } else if (act === 'resolve') {
+    const d = getAt(path); d.resolved = !d.resolved;
+    touch((d.resolved ? 'resolved' : 'reopened') + ' “' + d.q.slice(0, 46) + '”');
+  } else if (act === 'onlyMine') {
+    onlyMine = !onlyMine;
+    try { localStorage.setItem('plan_only_mine', onlyMine ? '1' : '0'); } catch (e) {}
+  } else if (act === 'setMe') {
+    localStorage.setItem('plan_me_id', btn.dataset.id);
+    const m = members().find(x => x.id === btn.dataset.id);
+    me = m ? m.name : '';
+  } else if (act === 'addMember') {
+    const name = prompt('Name'); if (!name) return;
+    state.members.push({ id: 'm-' + uid(), name: name.trim(), color: AV_COLORS[state.members.length % AV_COLORS.length] });
+    touch('added ' + name.trim() + ' to the team');
+  } else if (act === 'delMember') {
+    const m = getAt(path);
+    if (!confirm('Remove ' + m.name + '? Their assignments become unassigned.')) return;
+    allTasks().forEach(t => { if (handleOf(t.owner) === handleOf(m.name)) t.owner = '—'; });
+    if (meMember() && meMember().id === m.id) localStorage.removeItem('plan_me_id');
+    removeAt(path); touch('removed ' + m.name + ' from the team');
+  } else if (act === 'afilter') {
+    state.activityFilter = btn.dataset.who; saveLocal();
+  } else if (act === 'mention') {
+    const names = members().map(m => m.name);
+    const pick = prompt('Tag who?\n\n' + names.join(', '), names[0]);
+    if (!pick) return;
+    const m = memberByName(pick); if (!m) { alert('No team member called ' + pick); return; }
+    const cur = getAt(path) || '';
+    setAt(path, (cur ? cur.replace(/\s+$/, '') + ' ' : '') + '@' + handleOf(m.name) + ' ');
+    touch('tagged ' + m.name);
+  } else if (act === 'addLink') {
+    const url = prompt('URL'); if (!url) return;
+    const label = prompt('Label', url) || url;
+    getAt(path).push({ url, label }); touch('added a link — ' + label);
+  } else if (act === 'delLink') {
+    getAt(path).splice(Number(btn.dataset.i), 1); touch('removed a link');
+  } else return;
+
+  render();
+});
+
+document.addEventListener('blur', e => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.edit) return;
+  const val = el.textContent.trim();
+  if (getAt(el.dataset.edit) === val) return;
+  setAt(el.dataset.edit, val);
+  const tagged = mentionsIn(val);
+  touch(tagged.length
+    ? 'tagged ' + tagged.map(id => (members().find(m => m.id === id) || {}).name).join(', ')
+    : 'edited text');
+  /* re-render so a new @mention lights up and reaches the right person's queue */
+  if (val.indexOf('@') > -1 || el.dataset.edit.indexOf('members.') === 0) render();
+}, true);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.dataset && e.target.dataset.edit && !e.target.classList.contains('note')) {
+    e.preventDefault(); e.target.blur();
+  }
+});
+
+document.getElementById('gateSw').addEventListener('click', () => {
+  state.meta.agreed = !state.meta.agreed;
+  if (state.meta.agreed && !state.meta.startDate) state.meta.startDate = todayISO();
+  touch(state.meta.agreed ? 'marked commercials agreed' : 'reopened commercials');
+  render();
+});
+document.getElementById('gateDate').addEventListener('change', e => {
+  state.meta.startDate = e.target.value; touch('set the start date'); render();
+});
+function paintThemeBtn() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('themeBtn').innerHTML =
+    '<span class="g">' + (dark ? '☀' : '☾') + '</span>' + (dark ? 'Light' : 'Dark');
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = dark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('plan_theme', next); } catch (e) {}
+  paintThemeBtn();
+});
+paintThemeBtn();
+
+document.getElementById('whoami').addEventListener('click', () => {
+  if (session) {
+    alert('Signed in as ' + session.user.email + '.\n\nIdentity comes from the account you signed in with. Sign out to switch.');
+    return;
+  }
+  const names = members().map(m => m.name);
+  const cur = meMember();
+  const v = prompt('Who are you?\n\n' + names.join(', ') + '\n\n(Or type a new name to join the team.)', cur ? cur.name : names[0]);
+  if (!v) return;
+  let m = memberByName(v);
+  if (!m) {
+    m = { id: 'm-' + uid(), name: v.trim(), color: AV_COLORS[state.members.length % AV_COLORS.length] };
+    state.members.push(m);
+    touch('joined as ' + m.name);
+  }
+  localStorage.setItem('plan_me_id', m.id);
+  me = m.name;
+  render();
+});
+document.getElementById('signOutBtn').addEventListener('click', signOut);
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
+  a.download = 'conciergia-plan.json'; a.click();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset everything to the default plan?')) return;
+  state = defaultState(); touch('reset the plan'); render();
+});
+
+/* Keep the page honest about the date: re-render if the day rolls over
+   while it's open, or when the tab is brought back into focus. */
+let lastDay = todayISO();
+function checkDay() {
+  const d = todayISO();
+  if (d !== lastDay) { lastDay = d; render(); }
+}
+setInterval(checkDay, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDay(); });
+window.addEventListener('focus', checkDay);
+
+/* ---------------- auth ---------------- */
+const gateScreen = document.getElementById('gateScreen');
+const loginForm = document.getElementById('loginForm');
+const loginErr = document.getElementById('loginErr');
+const loginBtn = document.getElementById('loginBtn');
+
+function showLogin(msg) {
+  gateScreen.hidden = false;
+  document.getElementById('loginAlt').textContent = msg || '';
+  document.getElementById('email').focus();
+}
+
+loginForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!sb) return;
+  loginErr.textContent = '';
+  loginBtn.disabled = true; loginBtn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+  });
+  loginBtn.disabled = false; loginBtn.textContent = 'Sign in';
+  if (error) { loginErr.textContent = error.message || 'That did not work.'; return; }
+  session = data.session;
+  document.getElementById('password').value = '';
+  gateScreen.hidden = true;
+  await startApp();
+});
+
+async function signOut() {
+  if (sb) await sb.auth.signOut();
+  session = null;
+  location.reload();
+}
+
+async function startApp() {
+  await initStore();
+  if (!state.meta.createdAt) { state.meta.createdAt = todayISO(); saveLocal(); }
+  if (!state.members || !state.members.length) { state.members = defaultState().members; saveLocal(); }
+  const m0 = meMember(); me = m0 ? m0.name : '';
+  if (session && !m0) {
+    /* signed in with an address that isn't in ACCOUNTS */
+    alert('Signed in as ' + session.user.email + ', but that address is not mapped to Bobby or Anna. Check the ACCOUNTS block at the top of the page source.');
+  }
+  render();
+}
+
+async function boot() {
+  if (AUTH_ON && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data } = await sb.auth.getSession();
+    session = data ? data.session : null;
+    sb.auth.onAuthStateChange((_e, s) => { session = s; if (!s) location.reload(); });
+    if (!session) { showLogin('Two accounts: Bobby and Anna.'); return; }
+    gateScreen.hidden = true;
+  }
+  await startApp();
+}
+boot();
+</script>
+</body>
+</html>
