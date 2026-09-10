@@ -1284,9 +1284,9 @@ loginForm.addEventListener('submit', async e => {
 });
 
 async function signOut() {
-  if (sb) await sb.auth.signOut();
+  try { if (sb) await sb.auth.signOut(); } catch (e) {}
   session = null;
-  location.reload();
+  location.replace(location.pathname);
 }
 
 async function startApp() {
@@ -1314,7 +1314,18 @@ async function boot() {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data } = await sb.auth.getSession();
     session = data ? data.session : null;
-    sb.auth.onAuthStateChange((_e, s) => { session = s; if (!s) location.reload(); });
+    /* Only react to a real sign-out, and only once. A null session on
+       INITIAL_SESSION just means nobody is signed in yet — reloading on
+       that spins the page forever. */
+    let hadSession = !!session, reloading = false;
+    sb.auth.onAuthStateChange((event, s) => {
+      session = s;
+      if (s) hadSession = true;
+      if (event === 'SIGNED_OUT' && hadSession && !reloading) {
+        reloading = true;
+        location.reload();
+      }
+    });
     if (!session) { showLogin('Two accounts: Bobby and Anna.'); return; }
     gateScreen.hidden = true;
   }
