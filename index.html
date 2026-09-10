@@ -720,6 +720,13 @@ function B(name, note) { return { id: uid(), text: name, sub: note, done: false,
 /* ---------------- store ---------------- */
 let state = null, me = '', sb = null, saveTimer = null, applying = false;
 let session = null;
+/* --- edit/render guards ---------------------------------------------
+   A re-render replaces the DOM. If it happens while someone is typing,
+   the focused element is destroyed, fires blur with stale text, and that
+   write echoes back as another realtime update — a loop that eats input.
+   So: never render while a field has focus, and ignore the echo of our
+   own writes. */
+let editing = false, pendingRender = false, lastPushed = '';
 const AUTH_ON = !!(SUPABASE_URL && SUPABASE_KEY);
 
 const LS = 'conciergia_plan_v1';
@@ -743,9 +750,10 @@ async function initStore() {
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'plan_state', filter: 'id=eq.' + DOC_ID },
             payload => {
-              if (payload.new && payload.new.doc && !applying) {
-                state = payload.new.doc; saveLocal(); render();
-              }
+              if (!payload.new || !payload.new.doc) return;
+              const incoming = JSON.stringify(payload.new.doc);
+              if (incoming === lastPushed) return;   // our own write, echoed back
+              state = payload.new.doc; saveLocal(); render();
             })
         .subscribe();
       setSync(true, 'Shared — live');
@@ -766,10 +774,10 @@ function touch(what) {
   if (sb) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
-      applying = true;
-      try { await sb.from('plan_state').upsert({ id: DOC_ID, doc: state, updated_at: new Date().toISOString() }); }
+      const body = JSON.parse(JSON.stringify(state));
+      lastPushed = JSON.stringify(body);
+      try { await sb.from('plan_state').upsert({ id: DOC_ID, doc: body, updated_at: new Date().toISOString() }); }
       catch (e) { setSync(false, 'Sync error'); }
-      setTimeout(() => { applying = false; }, 400);
     }, 600);
   }
 }
@@ -872,6 +880,8 @@ function linksBlock(arr, path) {
 
 /* ---------------- render ---------------- */
 function render() {
+  if (editing) { pendingRender = true; return; }
+  pendingRender = false;
   const done = allTasks().filter(t => t.done).length, total = allTasks().length;
   document.getElementById('progText').textContent = done + ' of ' + total + ' done';
   document.getElementById('progBar').style.width = total ? (done / total * 100) + '%' : '0%';
@@ -1152,9 +1162,17 @@ document.addEventListener('click', e => {
   render();
 });
 
+document.addEventListener('focusin', e => {
+  if (e.target.dataset && e.target.dataset.edit) editing = true;
+});
+
 document.addEventListener('blur', e => {
   const el = e.target;
   if (!el.dataset || !el.dataset.edit) return;
+  editing = false;
+  /* a blur fired because the element was removed by a re-render carries
+     stale text — never write that back */
+  if (!el.isConnected) { if (pendingRender) render(); return; }
   const val = el.textContent.trim();
   if (getAt(el.dataset.edit) === val) return;
   setAt(el.dataset.edit, val);
@@ -1163,7 +1181,7 @@ document.addEventListener('blur', e => {
     ? 'tagged ' + tagged.map(id => (members().find(m => m.id === id) || {}).name).join(', ')
     : 'edited text');
   /* re-render so a new @mention lights up and reaches the right person's queue */
-  if (val.indexOf('@') > -1 || el.dataset.edit.indexOf('members.') === 0) render();
+  if (val.indexOf('@') > -1 || el.dataset.edit.indexOf('members.') === 0 || pendingRender) render();
 }, true);
 
 document.addEventListener('keydown', e => {
