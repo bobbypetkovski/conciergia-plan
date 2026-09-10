@@ -439,7 +439,7 @@ footer button:hover{color:var(--accent)}
 </main>
 
 <!-- Supabase client. Harmless if you never configure it below. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script>
 /* =========================================================================
    SHARED STORAGE
@@ -458,8 +458,8 @@ footer button:hover{color:var(--accent)}
    For two known people, RLS off with the anon key is fine. If you want it
    locked down, add a policy and swap the anon key for an authed session.
    ======================================================================== */
-const SUPABASE_URL  = '';
-const SUPABASE_KEY  = '';
+const SUPABASE_URL  = 'https://vbamfiwbbywdiifujzhp.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_Mn0krf2XW_nhdywZiZyZuw_QeGMdO5H';
 const DOC_ID        = 'conciergia-plan';
 
 /* Accounts. Create these two users in Supabase → Authentication → Users
@@ -467,8 +467,8 @@ const DOC_ID        = 'conciergia-plan';
    signs in is matched to a team member by email, and that decides which
    tasks are "theirs". */
 const ACCOUNTS = {
-  'm-bobby': 'bobby@example.com',
-  'm-anna':  'anna@example.com',
+  'm-bobby': 'bobbypetkovski@gmail.com',
+  'm-anna':  'anna@theconciergia.com',   // <-- must match the Supabase user exactly
 };
 
 /* Lock the table down once the two users exist:
@@ -1284,7 +1284,15 @@ async function startApp() {
 }
 
 async function boot() {
-  if (AUTH_ON && window.supabase) {
+  if (AUTH_ON) {
+    /* Fail closed. If the auth library didn't load, show the gate and stop —
+       never fall through to the unauthenticated local mode. */
+    if (!window.supabase) {
+      showLogin('');
+      loginErr.textContent = 'Could not load the sign-in library. Check your connection and reload.';
+      loginBtn.disabled = true;
+      return;
+    }
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data } = await sb.auth.getSession();
     session = data ? data.session : null;
